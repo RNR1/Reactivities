@@ -1,11 +1,25 @@
-import React, { FC, useContext } from 'react'
+import React, { FC, useContext, useEffect } from 'react'
 import { Card, Image, Button } from 'semantic-ui-react'
 import ActivityStore from '../../../app/stores/activityStore'
 import { observer } from 'mobx-react-lite'
+import { RouteComponentProps, Link } from 'react-router-dom'
+import { Spinner } from '../../../app/layout/Spinner'
 
-const ActivityDetails: FC = () => {
+interface IParams {
+	id: string
+}
+
+const ActivityDetails: FC<RouteComponentProps<IParams>> = props => {
 	const activityStore = useContext(ActivityStore)
-	const { selectedActivity: activity, openEditForm, cancelSelectedActivity } = activityStore
+	const { activity, loadActivity } = activityStore
+	const { id } = props.match.params
+	const { history } = props
+
+	useEffect(() => {
+		loadActivity(id)
+	}, [loadActivity, id])
+
+	if (!activity) return <Spinner content={'Loading activity...'} />
 	const { category, title, date, description } = activity!
 	return (
 		<Card fluid>
@@ -24,13 +38,13 @@ const ActivityDetails: FC = () => {
 			<Card.Content extra>
 				<Button.Group widths={2}>
 					<Button
-						onClick={() => openEditForm(activity!.id)}
+						as={Link} to={'/manage/' + activity.id}
 						basic
 						color='blue'
 						content='Edit'
 					/>
 					<Button
-            onClick={cancelSelectedActivity}
+						onClick={() => history.push('/activities')}
 						basic
 						color='grey'
 						content='Cancel'
