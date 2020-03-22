@@ -15,14 +15,15 @@ interface IParams {
 
 const ActivityDetails: FC<RouteComponentProps<IParams>> = props => {
 	const activityStore = useContext(ActivityStore)
-	const { activity, loadActivity } = activityStore
+	const { activity, loadActivity, loading } = activityStore
 	const { id } = props.match.params
 
 	useEffect(() => {
 		loadActivity(id)
 	}, [loadActivity, id])
 
-	if (!activity) return <Spinner content={'Loading activity...'} />
+	if (loading) return <Spinner content={'Loading activity...'} />
+	if (!activity) return <h2>Activity not found.</h2>
 	return (
 		<Grid>
 			<Grid.Column width={10}>
