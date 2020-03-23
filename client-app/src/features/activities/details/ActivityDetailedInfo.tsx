@@ -1,13 +1,16 @@
 import React, { FC } from 'react'
 import { Segment, Grid, Icon } from 'semantic-ui-react'
 import { IActivity } from '../../../app/models/activity'
+import { format } from 'date-fns'
 
 interface IProps {
 	activity: IActivity
 }
 
 const ActivityDetailedInfo: FC<IProps> = ({ activity }) => {
-	const { description, date, venue, city } = activity
+	const { description, venue, city } = activity
+	const date = format(activity.date!, 'eeee do MMMM')
+	const time = format(activity.date!, 'h:mm a')
 	return (
 		<Segment.Group>
 			<Segment attached='top'>
@@ -26,7 +29,7 @@ const ActivityDetailedInfo: FC<IProps> = ({ activity }) => {
 						<Icon name='calendar' size='large' color='teal' />
 					</Grid.Column>
 					<Grid.Column width={15}>
-						<span>{date}</span>
+						<span>{date} at {time}</span>
 					</Grid.Column>
 				</Grid>
 			</Segment>
