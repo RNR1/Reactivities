@@ -2,16 +2,16 @@ import React, { FC, useContext, useEffect } from 'react'
 import { Grid } from 'semantic-ui-react'
 import ActivityList from './ActivityList'
 import { observer } from 'mobx-react-lite'
-import ActivityStore from '../../../app/stores/activityStore'
 import { Spinner } from '../../../app/layout/Spinner'
+import {RootStoreContext} from '../../../app/stores/rootStore'
 
 const ActivityDashboard: FC = () => {
-	const activityStore = useContext(ActivityStore)
-	const { loading } = activityStore
+	const rootStore = useContext(RootStoreContext)
+	const { loading, loadActivities } = rootStore.activityStore
 
 	useEffect(() => {
-		activityStore.loadActivities()
-	}, [activityStore])
+		loadActivities()
+	}, [loadActivities])
 
 	if (loading) return <Spinner content='Loading activities...' />
 	return (

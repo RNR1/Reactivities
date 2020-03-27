@@ -1,5 +1,4 @@
 import React, { FC, useState, useContext, useEffect } from 'react'
-import ActivityStore from '../../../app/stores/activityStore'
 import { Segment, Form, Button, Grid } from 'semantic-ui-react'
 import { ActivityFormValues } from '../../../app/models/activity'
 import { v4 as uuid } from 'uuid'
@@ -13,15 +12,16 @@ import { category } from '../../../app/common/options/categoryOptions'
 import DateInput from '../../../app/common/form/DateInput'
 import * as utils from '../../../app/common/util/util'
 import { validate } from './validate'
+import { RootStoreContext } from '../../../app/stores/rootStore'
 
 interface IParams {
 	id: string
 }
 
 const ActivityForm: FC<RouteComponentProps<IParams>> = props => {
-	const activityStore = useContext(ActivityStore)
-	const { submitting } = activityStore
-	const { createActivity, editActivity, loadActivity } = activityStore
+	const rootStore = useContext(RootStoreContext)
+	const { submitting } = rootStore.activityStore
+	const { createActivity, editActivity, loadActivity } = rootStore.activityStore
 	const { combineDateAndTime, redirectFromForm } = utils
 	const { id } = props.match.params
 
