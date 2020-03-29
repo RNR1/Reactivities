@@ -1,15 +1,14 @@
-import { RootStore } from './rootStore';
-import { toast } from 'react-toastify';
-import { history } from './../..';
-import { IActivity } from './../models/activity'
+import { setActivityProps, createAttendee } from './../common/util/util'
+import { RootStore } from './rootStore'
+import { toast } from 'react-toastify'
+import { history } from './../..'
+import { IActivity, IAttendee } from './../models/activity'
 import { observable, action, computed, runInAction } from 'mobx'
 import { SyntheticEvent } from 'react'
 import agent from '../api/agent'
 
-
-
 export default class ActivityStore {
-	rootStore: RootStore 
+	rootStore: RootStore
 	constructor(rootStore: RootStore) {
 		this.rootStore = rootStore
 	}
@@ -17,6 +16,7 @@ export default class ActivityStore {
 	@observable activityRegistry = new Map()
 	@observable activity: IActivity | undefined
 	@observable loading = false
+	@observable loadingInitial = false
 	@observable submitting = false
 	@observable target = ''
 
@@ -30,20 +30,25 @@ export default class ActivityStore {
 			(a, b) => a.date.getTime() - b.date.getTime()
 		)
 
-		return Object.entries(sorted.reduce((activities, activity) => {
-			const date = activity.date.toISOString().split('T')[0]
-			activities[date] = activities[date] ? [...activities[date], activity] : [activity]
-			return activities
-		}, {} as {[key: string]: IActivity[]}))
+		return Object.entries(
+			sorted.reduce((activities, activity) => {
+				const date = activity.date.toISOString().split('T')[0]
+				activities[date] = activities[date]
+					? [...activities[date], activity]
+					: [activity]
+				return activities
+			}, {} as { [key: string]: IActivity[] })
+		)
 	}
 
 	@action loadActivities = async () => {
 		this.loading = true
+		const user = this.rootStore.userStore.user!
 		try {
 			const activities = await agent.Activities.list()
 			runInAction('loading activities', () => {
 				activities.forEach(activity => {
-					activity.date = new Date(activity.date)
+					setActivityProps(activity, user)
 					this.activityRegistry.set(activity.id, activity)
 				})
 				this.loading = false
@@ -63,10 +68,11 @@ export default class ActivityStore {
 			return activity
 		} else {
 			this.loading = true
+			const user = this.rootStore.userStore.user!
 			try {
 				activity = await agent.Activities.details(id)
 				runInAction('getting activity', () => {
-					activity.date = new Date(activity.date)
+					setActivityProps(activity, user)
 					this.activity = activity
 					this.activityRegistry.set(activity.id, activity)
 					this.loading = false
@@ -87,8 +93,15 @@ export default class ActivityStore {
 
 	@action createActivity = async (activity: IActivity) => {
 		this.submitting = true
+		const user = this.rootStore.userStore.user!
 		try {
 			await agent.Activities.create(activity)
+			const attendee = createAttendee(user)
+			attendee.isHost = true
+			let attendees = []
+			attendees.push(attendee)
+			activity.attendees = attendees
+			activity.isHost = true
 			runInAction('creating activity', () => {
 				this.activityRegistry.set(activity.id, activity)
 				this.submitting = false
@@ -141,6 +154,48 @@ export default class ActivityStore {
 				this.target = ''
 			})
 			console.log(error)
+		}
+	}
+
+	@action attendActivity = async () => {
+		const user = this.rootStore.userStore.user!
+		const attendee = createAttendee(user)
+		this.loadingInitial = true
+		try {
+			await agent.Activities.attend(this.activity!.id)
+			runInAction('attend activity', () => {
+				if (this.activity) {
+					this.activity.attendees.push(attendee)
+					this.activity.isGoing = true
+					this.activityRegistry.set(this.activity.id, this.activity)
+					this.loadingInitial = false
+				}
+			})
+		} catch(error) {
+			runInAction('error attending to activity', () => {
+				this.loadingInitial = false
+			})
+			toast.error('Problem signing up to activity')
+		}
+	}
+
+	@action cancelAttendance = async () => {
+		const user = this.rootStore.userStore.user!
+		this.loadingInitial = true
+		try {
+			await agent.Activities.unattend(this.activity!.id)
+			runInAction('cancel attendance', () => {
+				if (this.activity) {
+					const filter = (a: IAttendee) => a.username !== user.username
+					this.activity.attendees = this.activity.attendees.filter(filter)
+					this.activity.isGoing = false
+					this.activityRegistry.set(this.activity.id, this.activity)
+					this.loadingInitial = false
+				}
+			})
+		} catch(error) {
+			this.loadingInitial = false
+			toast.error('Problem canceling attendance')
 		}
 	}
 }
