@@ -34,6 +34,23 @@ export default class ProfileStore {
 		}
 	}
 
+	@action updateProfile = async (profile: Partial<IProfile>) => {
+		try {
+			await agent.Profiles.update(profile)
+			runInAction('updating profile', () => {
+				if (
+					profile.displayName !== this.rootStore.userStore.user!.displayName
+				) {
+					this.rootStore.userStore.user!.displayName = profile.displayName!
+				}
+				this.profile = { ...this.profile!, ...profile }
+				this.loading = false
+			})
+		} catch (error) {
+			toast.error('Problem updating your profile')
+		}
+	}
+
 	@action uploadPhoto = async (file: Blob) => {
 		this.uploadingPhoto = true
 		try {
@@ -48,7 +65,7 @@ export default class ProfileStore {
 				}
 				this.uploadingPhoto = false
 			})
-		} catch(error) {
+		} catch (error) {
 			console.log(error)
 			toast.error('Problem uploading photo')
 			runInAction('error uploading photo', () => {
@@ -68,7 +85,7 @@ export default class ProfileStore {
 				this.profile!.image = photo.url
 				this.loading = false
 			})
-		} catch(error) {
+		} catch (error) {
 			toast.error('Problem setting photo as main')
 			runInAction('error setting main photo', () => {
 				this.loading = false
@@ -81,10 +98,12 @@ export default class ProfileStore {
 		try {
 			await agent.Profiles.deletePhoto(photo.id)
 			runInAction('deleting photo', () => {
-				this.profile!.photos = this.profile!.photos.filter(a => a.id !== photo.id)
+				this.profile!.photos = this.profile!.photos.filter(
+					a => a.id !== photo.id
+				)
 				this.loading = false
 			})
-		} catch(error) {
+		} catch (error) {
 			toast.error('Problem deleting the photo')
 			runInAction('error deleting photo', () => {
 				this.loading = false
