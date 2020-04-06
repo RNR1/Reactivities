@@ -6,6 +6,11 @@ import { IActivity, IAttendee } from './../models/activity'
 import { observable, action, computed, runInAction } from 'mobx'
 import { SyntheticEvent } from 'react'
 import agent from '../api/agent'
+import {
+	HubConnection,
+	HubConnectionBuilder,
+	LogLevel
+} from '@microsoft/signalr'
 
 export default class ActivityStore {
 	rootStore: RootStore
@@ -19,6 +24,49 @@ export default class ActivityStore {
 	@observable loadingInitial = false
 	@observable submitting = false
 	@observable target = ''
+	@observable.ref hubConnection: HubConnection | null = null
+
+	@action createHubConnection = (activityId: string) => {
+		this.hubConnection = new HubConnectionBuilder()
+			.withUrl('http://localhost:5000/chat', {
+				accessTokenFactory: () => this.rootStore.commonStore.token!
+			})
+			.configureLogging(LogLevel.Information)
+			.build()
+
+		this.hubConnection
+			?.start()
+			.then(() => console.log(this.hubConnection!.state))
+			.then(() => {
+				console.log('Attempting to join group')
+				this.hubConnection!.invoke('AddToGroup', this.activity!.id)
+			})
+			.catch(error => console.log('Error establishing connection: ', error))
+
+		this.hubConnection?.on('ReceiveComment', comment => {
+			runInAction('broadcast comment', () => {
+				this.activity!.comments.push(comment)
+			})
+		})
+	}
+
+	@action stopHubConnection = () => {
+		this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
+			.then(() => {
+				this.hubConnection!.stop()
+			})
+			.then(() => console.log('Connection has stopped'))
+			.catch(error => console.log(error))
+	}
+
+	@action addComment = async (values: any) => {
+		values.activityId = this.activity!.id
+		try {
+			await this.hubConnection!.invoke('SendComment', values)
+		} catch (error) {
+			console.log(error)
+		}
+	}
 
 	@computed get activitiesByDate() {
 		const activities = Array.from(this.activityRegistry.values())
@@ -101,6 +149,7 @@ export default class ActivityStore {
 			let attendees = []
 			attendees.push(attendee)
 			activity.attendees = attendees
+			activity.comments = []
 			activity.isHost = true
 			runInAction('creating activity', () => {
 				this.activityRegistry.set(activity.id, activity)
@@ -171,7 +220,7 @@ export default class ActivityStore {
 					this.loadingInitial = false
 				}
 			})
-		} catch(error) {
+		} catch (error) {
 			runInAction('error attending to activity', () => {
 				this.loadingInitial = false
 			})
@@ -193,7 +242,7 @@ export default class ActivityStore {
 					this.loadingInitial = false
 				}
 			})
-		} catch(error) {
+		} catch (error) {
 			this.loadingInitial = false
 			toast.error('Problem canceling attendance')
 		}
