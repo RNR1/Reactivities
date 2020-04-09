@@ -13,22 +13,23 @@ interface RouteParams {
 
 interface IProps extends RouteComponentProps<RouteParams> {}
 
-const Profile: FC<IProps> = ({match}) => {
+const Profile: FC<IProps> = ({ match }) => {
 	const rootStore = useContext(RootStoreContext)
-	const { loadingProfile, profile, loadProfile } = rootStore.profileStore
-  const {username} = match.params
+	const { profile, loadProfile } = rootStore.profileStore
+	const { loadingProfile, setActiveTab } = rootStore.profileStore
+	const { username } = match.params
 
 	useEffect(() => {
 		loadProfile(username)
-  }, [loadProfile, username])
-  
-  if (loadingProfile) return <Spinner content="Loading profile..." />
+	}, [loadProfile, username])
+
+	if (loadingProfile) return <Spinner content='Loading profile...' />
 
 	return (
 		<Grid>
 			<Grid.Column width={16}>
 				<ProfileHeader profile={profile!} />
-				<ProfileContent />
+				<ProfileContent setActiveTab={setActiveTab} />
 			</Grid.Column>
 		</Grid>
 	)

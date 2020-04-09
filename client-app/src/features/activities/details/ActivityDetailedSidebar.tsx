@@ -22,7 +22,7 @@ const ActivityDetailedSidebar: FC<IProps> = ({ attendees }) => {
 			</Segment>
 			<Segment attached>
 				<List relaxed divided>
-					{attendees.map(a => (
+					{attendees.map((a) => (
 						<Item key={a.username} style={{ position: 'relative' }}>
 							{a.isHost && (
 								<Label
@@ -37,7 +37,9 @@ const ActivityDetailedSidebar: FC<IProps> = ({ attendees }) => {
 								<Item.Header as='h3'>
 									<Link to={`/profile/${a.username}`}>{a.displayName}</Link>
 								</Item.Header>
-								<Item.Extra style={{ color: 'orange' }}>Following</Item.Extra>
+								{a.following && (
+									<Item.Extra style={{ color: 'orange' }}>Following</Item.Extra>
+								)}
 							</Item.Content>
 						</Item>
 					))}

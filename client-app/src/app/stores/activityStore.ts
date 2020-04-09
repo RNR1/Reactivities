@@ -9,7 +9,7 @@ import agent from '../api/agent'
 import {
 	HubConnection,
 	HubConnectionBuilder,
-	LogLevel
+	LogLevel,
 } from '@microsoft/signalr'
 
 export default class ActivityStore {
@@ -26,24 +26,23 @@ export default class ActivityStore {
 	@observable target = ''
 	@observable.ref hubConnection: HubConnection | null = null
 
-	@action createHubConnection = (activityId: string) => {
+	@action createHubConnection = () => {
 		this.hubConnection = new HubConnectionBuilder()
 			.withUrl('http://localhost:5000/chat', {
-				accessTokenFactory: () => this.rootStore.commonStore.token!
+				accessTokenFactory: () => this.rootStore.commonStore.token!,
 			})
 			.configureLogging(LogLevel.Information)
 			.build()
 
 		this.hubConnection
-			?.start()
-			.then(() => console.log(this.hubConnection!.state))
+			.start()
 			.then(() => {
-				console.log('Attempting to join group')
-				this.hubConnection!.invoke('AddToGroup', this.activity!.id)
+				console.log(this.hubConnection?.state)
+				this.hubConnection?.invoke('AddToGroup', this.activity!.id)
 			})
-			.catch(error => console.log('Error establishing connection: ', error))
+			.catch((error) => console.log('Error establishing connection: ', error))
 
-		this.hubConnection?.on('ReceiveComment', comment => {
+		this.hubConnection?.on('ReceiveComment', (comment) => {
 			runInAction('broadcast comment', () => {
 				this.activity!.comments.push(comment)
 			})
@@ -51,12 +50,10 @@ export default class ActivityStore {
 	}
 
 	@action stopHubConnection = () => {
-		this.hubConnection!.invoke('RemoveFromGroup', this.activity!.id)
-			.then(() => {
-				this.hubConnection!.stop()
-			})
+		this.hubConnection?.invoke('RemoveFromGroup', this.activity!.id)
+			.then(() => this.hubConnection!.stop())
 			.then(() => console.log('Connection has stopped'))
-			.catch(error => console.log(error))
+			.catch((error) => console.log(error))
 	}
 
 	@action addComment = async (values: any) => {
@@ -95,7 +92,7 @@ export default class ActivityStore {
 		try {
 			const activities = await agent.Activities.list()
 			runInAction('loading activities', () => {
-				activities.forEach(activity => {
+				activities.forEach((activity) => {
 					setActivityProps(activity, user)
 					this.activityRegistry.set(activity.id, activity)
 				})
