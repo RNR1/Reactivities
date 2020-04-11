@@ -1,3 +1,4 @@
+import { IActivityEnvelope } from './../models/activity'
 import { IPhoto } from './../models/profile'
 import { IUserFormValues } from './../models/user'
 import { history } from '../..'
@@ -67,7 +68,8 @@ const requests = {
 }
 
 const Activities = {
-	list: (): Promise<IActivity[]> => requests.get('/activities'),
+	list: (params: URLSearchParams): Promise<IActivityEnvelope> =>
+		axios.get('/activities', { params }).then(sleep(1000)).then(responseBody),
 	details: (id: string) => requests.get('/activities/' + id),
 	create: (activity: IActivity) => requests.post('/activities', activity),
 	update: (activity: IActivity) =>
@@ -99,6 +101,8 @@ const Profiles = {
 		requests.delete(`/profiles/${username}/follow`),
 	listFollowings: (username: string, predicate: string) =>
 		requests.get(`/profiles/${username}/follow?predicate=${predicate}`),
+	listActivities: (username: string, predicate: string) => 
+		requests.get(`/profiles/${username}/activities?predicate=${predicate}`)
 }
 
 export default { Activities, User, Profiles }
