@@ -18,6 +18,7 @@ import { RootStoreContext } from '../stores/rootStore'
 import { Spinner } from './Spinner'
 import ModalContainer from '../common/modals/ModalContainer'
 import Profile from '../../features/profiles/Profile'
+import PrivateRoute from './PrivateRoute'
 
 const App: FC<RouteComponentProps> = ({ location }) => {
 	const rootStore = useContext(RootStoreContext)
@@ -46,14 +47,14 @@ const App: FC<RouteComponentProps> = ({ location }) => {
 						<Navbar />
 						<Container style={{ marginTop: '7em' }}>
 							<Switch>
-								<Route exact path='/activities' component={ActivityDashboard} />
-								<Route path='/activities/:id' component={ActivityDetails} />
-								<Route
+								<PrivateRoute exact path='/activities' component={ActivityDashboard} />
+								<PrivateRoute path='/activities/:id' component={ActivityDetails} />
+								<PrivateRoute
 									key={location.key}
 									path={['/create-activity', '/manage/:id']}
 									component={ActivityForm}
 								/>
-								<Route path='/profile/:username' component={Profile} />
+								<PrivateRoute path='/profile/:username' component={Profile} />
 								<Route component={NotFound} />
 							</Switch>
 						</Container>
