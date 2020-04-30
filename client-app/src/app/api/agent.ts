@@ -31,7 +31,12 @@ axios.interceptors.response.use(undefined, (error) => {
 		if (status === 404) {
 			history.push('/404')
 		}
-		if (status === 401 && headers['www-authenticate'].includes('Bearer error="invalid_token", error_description="The token expired')) {
+		if (
+			status === 401 &&
+			headers['www-authenticate'].includes(
+				'Bearer error="invalid_token", error_description="The token expired'
+			)
+		) {
 			window.localStorage.removeItem('jwt')
 			history.push('/')
 			toast.info('Your session has expired, please login again')
@@ -50,12 +55,9 @@ const responseBody = (response: AxiosResponse) => response.data
 
 const requests = {
 	get: (url: string) => axios.get(url).then(responseBody),
-	post: (url: string, body: {}) =>
-		axios.post(url, body).then(responseBody),
-	put: (url: string, body: {}) =>
-		axios.put(url, body).then(responseBody),
-	delete: (url: string) =>
-		axios.delete(url).then(responseBody),
+	post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
+	put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
+	delete: (url: string) => axios.delete(url).then(responseBody),
 	postForm: (url: string, file: Blob) => {
 		let formData = new FormData()
 		formData.append('File', file)
@@ -85,6 +87,8 @@ const User = {
 		requests.post('/user/login', user),
 	register: (user: IUserFormValues): Promise<IUser> =>
 		requests.post('/user/register', user),
+	fbLogin: (accessToken: string) =>
+		requests.post(`/user/facebook`, { accessToken }),
 }
 
 const Profiles = {
@@ -101,8 +105,8 @@ const Profiles = {
 		requests.delete(`/profiles/${username}/follow`),
 	listFollowings: (username: string, predicate: string) =>
 		requests.get(`/profiles/${username}/follow?predicate=${predicate}`),
-	listActivities: (username: string, predicate: string) => 
-		requests.get(`/profiles/${username}/activities?predicate=${predicate}`)
+	listActivities: (username: string, predicate: string) =>
+		requests.get(`/profiles/${username}/activities?predicate=${predicate}`),
 }
 
 export default { Activities, User, Profiles }
