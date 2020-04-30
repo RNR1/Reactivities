@@ -25,7 +25,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace API
 {
@@ -134,7 +133,9 @@ namespace API
       services.AddScoped<IUserAccessor, UserAccessor>();
       services.AddScoped<IPhotoAccessor, PhotoAccessor>();
       services.AddScoped<IProfileReader, ProfileReader>();
+      services.AddScoped<IFacebookAccessor, FacebookAccessor>();
       services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
+      services.Configure<FacebookAppSettings>(Configuration.GetSection("Authentication:Facebook"));
     }
 
     private void JwtBearer(AuthenticationOptions obj)
